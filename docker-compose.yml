@@ -1,0 +1,35 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis-tutorial
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - redis-network
+
+  jupyter:
+    build: .
+    container_name: jupyter-redis
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - redis-network
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    volumes:
+      - ./redis_tutorial.ipynb:/home/jovyan/work/redis_tutorial.ipynb:rw
+
+volumes:
+  redis-data:
+
+networks:
+  redis-network:
+    driver: bridge
